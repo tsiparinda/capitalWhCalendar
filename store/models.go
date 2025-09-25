@@ -75,39 +75,13 @@ type DataBalance struct {
 	Source     string // C- Capital; B- Bank
 }
 
-type Payment struct {
-	DocumentNumber                 string         `json:"document_number"`
-	PayerAccount                   string         `json:"payer_account"`
-	RecipientAccount               string         `json:"recipient_account"`
-	RecipientNceo                  string         `json:"recipient_nceo"`
-	PaymentNaming                  string         `json:"payment_naming"`
-	PaymentAmount                  string         `json:"payment_amount"`
-	PaymentDestination             string         `json:"payment_destination"`
-	DocumentType                   string         `json:"document_type,omitempty"`
-	PaymentDate                    string         `json:"payment_date,omitempty"`
-	PaymentAcceptDate              string         `json:"payment_accept_date,omitempty"`
-	PaymentCbRef                   string         `json:"payment_cb_ref,omitempty"`
-	CopyFromRef                    string         `json:"copy_from_ref,omitempty"`
-	Attach                         string         `json:"attach,omitempty"`
-	SignerMsg                      string         `json:"signer_msg,omitempty"`
-	OdbMsg                         string         `json:"odb_msg,omitempty"`
-	RecipientIfi                   string         `json:"recipient_ifi,omitempty"`
-	RecipientIfiText               string         `json:"recipient_ifi_text,omitempty"`
-	PayerUltmtNceo                 string         `json:"payer_ultmt_nceo,omitempty"`
-	PayerUltmtDocumentSeries       string         `json:"payer_ultmt_document_series,omitempty"`
-	PayerUltmtDocumentNumber       string         `json:"payer_ultmt_document_number,omitempty"`
-	PayerUltmtDocumentIdNumber     string         `json:"payer_ultmt_document_id_number,omitempty"`
-	PayerUltmtName                 string         `json:"payer_ultmt_name,omitempty"`
-	RecipientUltmtNceo             string         `json:"recipient_ultmt_nceo,omitempty"`
-	RecipientUltmtDocumentSeries   string         `json:"recipient_ultmt_document_series,omitempty"`
-	RecipientUltmtDocumentNumber   string         `json:"recipient_ultmt_document_number,omitempty"`
-	RecipientUltmtDocumentIdNumber string         `json:"recipient_ultmt_document_id_number,omitempty"`
-	RecipientUltmtName             string         `json:"recipient_ultmt_name,omitempty"`
-	StructCode                     string         `json:"struct_code,omitempty"`
-	StructCategory                 string         `json:"struct_category,omitempty"`
-	StructType                     string         `json:"struct_type,omitempty"`
-	Token                          sql.NullString `json:"-"`
-	ID_Key                         int64          `json:"-"`
+type Order struct {
+	CalendarID  string    `json:"calendarID"`
+	Summary     string    `json:"summary"`
+	Description string    `json:"description"`
+	Start       time.Time `json:"start"`
+	End         time.Time `json:"end"`
+	ID_Операции string    `json:"string"`
 }
 
 type PaymentResponse struct {

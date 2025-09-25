@@ -16,52 +16,61 @@ import (
 func StartExchangeEvents() {
 	ctx := context.Background()
 
-	payments := []store.Payment{}
+	orders := []store.Order{}
 
-	// send privat
-	err := store.LoadPaymentsPrivat(&payments)
+	err := store.LoadOrders(&orders)
 	if err != nil {
-		logger.Log.Info("StartExchangePayments: Error from LoadPaymentsPrivat:", err.Error())
+		logger.Log.Info("StartExchangeEvents: Error from LoadOrders:", err.Error())
 		return
 	}
 	logger.Log.WithFields(logrus.Fields{
-		"payments": payments,
-	}).Trace("StartExchangePayments: Payment loaded by LoadPaymentsPrivat")
+		"orders": orders,
+	}).Trace("StartExchangeEvents: Payment loaded by LoadOrders")
 
 	// Создание сервиса с сервисным аккаунтом
 	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
 	if err != nil {
-		log.Fatalf("Unable to create Calendar service: %v", err)
+		log.Fatalf("StartExchangeEvents: Unable to create Calendar service: %v", err)
 	}
 
-	calendarID := "primary" // или ID нужного календаря
+	// cycle
+	for _, p := range orders {
+		// Пример: создание события
+		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.Start, p.End)
+		if err != nil {
+			log.Fatalf("StartExchangeEvents: Error creating event: %v", err)
+		}
+		fmt.Println("StartExchangeEvents: Created event ID:", eventID)
+	}
+	////////////////
+	//calendarID := "primary" // или ID нужного календаря
 
 	// Пример: создание события
-	eventID, err := createEvent(ctx, srv, calendarID, "Тестовое событие", "Описание события", time.Now(), time.Now().Add(1*time.Hour))
-	if err != nil {
-		log.Fatalf("Error creating event: %v", err)
-	}
-	fmt.Println("Created event ID:", eventID)
+	// eventID, err := createEvent(ctx, srv, calendarID, "Тестовое событие", "Описание события", time.Now(), time.Now().Add(1*time.Hour))
+	// if err != nil {
+	// 	log.Fatalf("StartExchangeEvents: Error creating event: %v", err)
+	// }
+	// fmt.Println("StartExchangeEvents: Created event ID:", eventID)
 
 	// Пример: получение события
-	ev, err := getEvent(ctx, srv, calendarID, eventID)
-	if err != nil {
-		log.Fatalf("Error getting event: %v", err)
-	}
-	fmt.Println("Event summary:", ev.Summary)
+	// ev, err := getEvent(ctx, srv, calendarID, eventID)
+	// if err != nil {
+	// 	log.Fatalf("StartExchangeEvents: Error getting event: %v", err)
+	// }
+	// fmt.Println("StartExchangeEvents: Event summary:", ev.Summary)
 
-	// Пример: обновление события
-	ev.Summary = "Обновлённое событие"
-	if err := updateEvent(ctx, srv, calendarID, ev); err != nil {
-		log.Fatalf("Error updating event: %v", err)
-	}
-	fmt.Println("Event updated")
+	// // Пример: обновление события
+	// ev.Summary = "Обновлённое событие"
+	// if err := updateEvent(ctx, srv, calendarID, ev); err != nil {
+	// 	log.Fatalf("StartExchangeEvents: Error updating event: %v", err)
+	// }
+	// fmt.Println("StartExchangeEvents: Event updated")
 
-	// Пример: удаление события
-	if err := deleteEvent(ctx, srv, calendarID, eventID); err != nil {
-		log.Fatalf("Error deleting event: %v", err)
-	}
-	fmt.Println("Event deleted")
+	// // Пример: удаление события
+	// if err := deleteEvent(ctx, srv, calendarID, eventID); err != nil {
+	// 	log.Fatalf("Error deleting event: %v", err)
+	// }
+	// fmt.Println("Event deleted")
 }
 
 // Создание события

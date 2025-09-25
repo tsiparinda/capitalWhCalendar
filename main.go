@@ -3,6 +3,7 @@ package main
 import (
 	"capitalWhCalendar/db"
 	"capitalWhCalendar/logger"
+	"capitalWhCalendar/logic"
 	"fmt"
 	"os"
 )
@@ -22,7 +23,7 @@ func main() {
 
 	logger.Log.WithFields(fields).Info("Program was started")
 
-	//logic.StartExchangeEvents(records)
+	logic.StartExchangeEvents()
 
 	// logic.StartExchangePayments()
 	// logic.StartUpdateBalance()
