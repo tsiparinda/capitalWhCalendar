@@ -5,6 +5,8 @@
 *.dylib
 *.test
 
+service-account.json
+
 # Tools / outputs
 coverage.out
 bin/
