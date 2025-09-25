@@ -1,0 +1,14 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Tools / outputs
+coverage.out
+bin/
+vendor/
+
+# OS
+.DS_Store
