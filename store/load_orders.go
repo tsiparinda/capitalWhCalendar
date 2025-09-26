@@ -3,14 +3,21 @@ package store
 import (
 	"capitalWhCalendar/db"
 	"capitalWhCalendar/logger"
+	"log"
+	"time"
 
 	_ "github.com/denisenkom/go-mssqldb"
 )
 
 func LoadOrders(orders *[]Order) error {
 
+	loc, err := time.LoadLocation("Europe/Kyiv")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Select data from database
-	rows, err := db.DB.Query("SELECT calendarID,	summary,	description,	start, end, OperID  FROM whcal_orders2send")
+	rows, err := db.DB.Query("SELECT calendarID,	summary,	description, [start], [end], OperID  FROM whcal_orders2send")
 	if err != nil {
 		logger.Log.Info("Error loading orders from database:", err.Error())
 		return err
@@ -25,6 +32,10 @@ func LoadOrders(orders *[]Order) error {
 			logger.Log.Info("Error scanning orders rows:", err.Error())
 			return err
 		}
+		// Приводим к нужной зоне
+		p.Start = p.Start.In(loc)
+		p.End = p.End.In(loc)
+
 		*orders = append(*orders, p)
 	}
 

@@ -35,6 +35,7 @@ func StartExchangeEvents() {
 
 	// cycle
 	for _, p := range orders {
+		fmt.Println("StartExchangeEvents: Start:", p.Start.Format(time.RFC3339))
 		// Пример: создание события
 		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.Start, p.End)
 		if err != nil {
@@ -75,17 +76,28 @@ func StartExchangeEvents() {
 
 // Создание события
 func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary, description string, start, end time.Time) (string, error) {
+
 	event := &calendar.Event{
+
 		Summary:     summary,
 		Description: description,
+		//ColorId:     "7",
 		Start: &calendar.EventDateTime{
 			DateTime: start.Format(time.RFC3339),
-			TimeZone: "Europe/Vienna",
+			TimeZone: "Europe/Kiev",
 		},
 		End: &calendar.EventDateTime{
+			//DateTime: end.Format("2006-01-02T15:15:05"),
 			DateTime: end.Format(time.RFC3339),
-			TimeZone: "Europe/Vienna",
+			TimeZone: "Europe/Kiev",
 		},
+		// ExtendedProperties: &calendar.EventExtendedProperties{
+		// 	Private: map[string]string{
+		// 		"orderId":   "orderID",
+		// 		"warehouse": "warehouse",
+		// 		"status":    "pending", // например "pending"
+		// 	},
+		// },
 	}
 	createdEvent, err := srv.Events.Insert(calendarID, event).Do()
 	if err != nil {
