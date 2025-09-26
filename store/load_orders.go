@@ -27,7 +27,7 @@ func LoadOrders(orders *[]Order) error {
 	for rows.Next() {
 		var p Order
 		// Scan each column into the corresponding field of an Account. Adjust this line as needed based on your table structure.
-		err = rows.Scan(&p.CalendarID, &p.Summary, &p.Description, &p.Start, &p.End, &p.ID_Операции)
+		err = rows.Scan(&p.CalendarID, &p.Summary, &p.Description, &p.Start, &p.End, &p.OperID)
 		if err != nil {
 			logger.Log.Info("Error scanning orders rows:", err.Error())
 			return err

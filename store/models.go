@@ -81,7 +81,7 @@ type Order struct {
 	Description string    `json:"description"`
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
-	ID_Операции string    `json:"string"`
+	OperID      string    `json:"string"`
 }
 
 type PaymentResponse struct {

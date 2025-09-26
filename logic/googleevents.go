@@ -35,9 +35,9 @@ func StartExchangeEvents() {
 
 	// cycle
 	for _, p := range orders {
-		fmt.Println("StartExchangeEvents: Start:", p.Start.Format(time.RFC3339))
+
 		// Пример: создание события
-		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.Start, p.End)
+		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.OperID, p.Start, p.End)
 		if err != nil {
 			log.Fatalf("StartExchangeEvents: Error creating event: %v", err)
 		}
@@ -75,7 +75,7 @@ func StartExchangeEvents() {
 }
 
 // Создание события
-func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary, description string, start, end time.Time) (string, error) {
+func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary, description, operid string, start, end time.Time) (string, error) {
 
 	event := &calendar.Event{
 
@@ -91,13 +91,13 @@ func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary
 			DateTime: end.Format(time.RFC3339),
 			TimeZone: "Europe/Kiev",
 		},
-		// ExtendedProperties: &calendar.EventExtendedProperties{
-		// 	Private: map[string]string{
-		// 		"orderId":   "orderID",
-		// 		"warehouse": "warehouse",
-		// 		"status":    "pending", // например "pending"
-		// 	},
-		// },
+		ExtendedProperties: &calendar.EventExtendedProperties{
+			Private: map[string]string{
+				"operid":    operid,
+				"warehouse": "warehouse",
+				"status":    "pending", // например "pending"
+			},
+		},
 	}
 	createdEvent, err := srv.Events.Insert(calendarID, event).Do()
 	if err != nil {
