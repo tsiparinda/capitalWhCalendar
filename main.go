@@ -28,5 +28,5 @@ func main() {
 	// logic.StartExchangePayments()
 	// logic.StartUpdateBalance()
 
-	fmt.Println("hello!")
+
 }
