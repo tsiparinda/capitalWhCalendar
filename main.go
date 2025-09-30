@@ -23,10 +23,7 @@ func main() {
 
 	logger.Log.WithFields(fields).Info("Program was started")
 
-	logic.StartExchangeEvents()
-
-	// logic.StartExchangePayments()
-	// logic.StartUpdateBalance()
-
+	logic.SyncOrdersEvents()
+	logic.SendNewOrders()
 
 }

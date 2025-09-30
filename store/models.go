@@ -81,16 +81,13 @@ type Order struct {
 	Description string    `json:"description"`
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
-	OperID      string    `json:"string"`
-	EventID     string    `json:"string"`
+	OperID      string    `json:"operID"`
+	EventID     string    `json:"evendID"`
+	ColorId     string       `json:"colorid"`
 }
 
-type PaymentResponse struct {
-	ResponseStatus      string `json:"status"`           // ERROR
-	ResponseCode        int64  `json:"code"`             // 201 or 400
-	PaymentRef          string `json:"payment_ref"`      // "референс створеного платежу"
-	PaymentPackRef      string `json:"payment_pack_ref"` // "запакований референс створеного платежу"
-	ResponseMessage     string `json:"message"`          //"invalid document number",
-	ResponseRequestId   string `json:"requestId"`        // "20240223_131617_286f",
-	ResponseServiceCode string `json:"serviceCode"`      // "PMTSRV0112"
+// Структура для хранения syncToken по каждому календарю
+type Calendar struct {
+	CalendarID string
+	SyncToken  string
 }
