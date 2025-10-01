@@ -6,6 +6,7 @@ toolchain go1.24.7
 
 require (
 	github.com/denisenkom/go-mssqldb v0.12.3
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/text v0.29.0

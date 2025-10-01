@@ -3,7 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"reflect"
 
 	dec "github.com/shopspring/decimal"
@@ -75,7 +75,7 @@ func ConvertToCP1251(data []byte) ([]byte, error) {
 	reader := bytes.NewReader(data)
 	transformer := charmap.Windows1251.NewEncoder()
 	transformedReader := transform.NewReader(reader, transformer)
-	return ioutil.ReadAll(transformedReader)
+	return io.ReadAll(transformedReader)
 }
 
 func EncodeWindows1251(ba []uint8) ([]uint8, error) {

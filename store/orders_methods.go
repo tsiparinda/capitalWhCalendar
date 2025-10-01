@@ -40,10 +40,15 @@ func LoadOrders(orders *[]Order) error {
 
 		*orders = append(*orders, p)
 	}
-
 	// Check for errors from iterating over rows.
 	if err := rows.Err(); err != nil {
 		logger.Log.Errorf("LoadOrders: Error iterating orders rows:", err.Error())
+		return err
+	}
+
+	// Check for errors from iterating over rows.
+	if err := insertProduct(orders); err != nil {
+		logger.Log.Errorf("LoadOrders: Error inserting orders rows:", err.Error())
 		return err
 	}
 
@@ -62,4 +67,40 @@ func LinkOrder2Event(p Order) {
 		}).Debugf("LinkOrder2Event: Error run sp.[whcal_LinkOrder2Event]: ", err.Error())
 	}
 
+}
+
+func insertProduct(orders *[]Order) error {
+	// in orders we have only new orders!!!
+	// Select data from database
+
+	for i := range *orders {
+		o := &(*orders)[i]
+
+		rows, err := db.DB.Query("exec whcal_GetOrderLines @OperID=@p1",
+			sql.Named("p1", o.OperID))
+		if err != nil {
+			logger.Log.Errorf("insertProduct: Error loading orders lines from database:", err.Error())
+			return err
+		}
+
+		for rows.Next() {
+			var p OrderDetails
+			// Scan each column into the corresponding field of an Account. Adjust this line as needed based on your table structure.
+			err = rows.Scan(&p.Article, &p.Amount)
+			if err != nil {
+				logger.Log.Errorf("insertProduct: Error scanning order lines rows:", err.Error())
+				return err
+			}
+			o.Articles = append(o.Articles, p)
+		}
+
+		// Check for errors from iterating over rows.
+		if err := rows.Err(); err != nil {
+			logger.Log.Errorf("LoadOrders: Error iterating orders rows:", err.Error())
+			return err
+		}
+		defer rows.Close()
+	}
+
+	return nil
 }

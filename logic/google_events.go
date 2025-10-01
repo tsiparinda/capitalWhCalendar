@@ -2,6 +2,7 @@ package logic
 
 import (
 	"capitalWhCalendar/logger"
+
 	"capitalWhCalendar/store"
 	"context"
 
@@ -15,6 +16,7 @@ func SendNewOrders() {
 
 	orders := []store.Order{}
 
+	// fill Order structure with details
 	err := store.LoadOrders(&orders)
 	if err != nil {
 		logger.Log.Errorf("SendNewOrders: Error from LoadOrders:", err.Error())
@@ -23,6 +25,25 @@ func SendNewOrders() {
 	logger.Log.WithFields(logrus.Fields{
 		"orders": orders,
 	}).Trace("SendNewOrders: Orders loaded by LoadOrders")
+
+	driveSrv, err := createDriveService()
+	if err != nil {
+		logger.Log.Fatal(err)
+	}
+
+	folderID := "1N1b8WIfccnb7SdWt8YXr8m-sbyH4t8wT"
+	days := 7
+
+	deleteOldFiles(driveSrv, folderID, days)
+
+	// generate PDF
+	if err := store.CreatePDF(driveSrv, &orders, folderID); err != nil {
+		logger.Log.Errorf("SendNewOrders: Error from GeneratePDF:", err.Error())
+		return
+	}
+	logger.Log.WithFields(logrus.Fields{
+		"orders": orders,
+	}).Trace("SendNewOrders: Orders loaded to pdf")
 
 	// Создание сервиса с сервисным аккаунтом
 	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
@@ -35,7 +56,7 @@ func SendNewOrders() {
 	for _, p := range orders {
 
 		// Пример: создание события
-		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.OperID, p.Start, p.End, p.ColorId)
+		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.OperID, p.ColorId, p.FileURL, p.Start, p.End)
 		if err != nil {
 			logger.Log.Errorf("SendNewOrders: Error creating event: %v", err)
 		}
@@ -67,11 +88,6 @@ func SyncOrdersEvents() {
 	logger.Log.WithFields(logrus.Fields{
 		"calendars": calendars,
 	}).Trace("SyncOrdersEvents: Calendars loaded by LoadCalendars")
-	// Список календарей и их syncToken
-	// calendars := []store.Calendar{
-	// 	{CalendarID: "9e36c3271e54afacec8d61b01e8db14cbd0a87cac5ee5ff74226f92305d16de4@group.calendar.google.com"},
-	// 	{CalendarID: "3c902775b6f7349e63e32371db3b69989dfd8f5d600c85198705a4b9a55f75a5@group.calendar.google.com"},
-	// }
 
 	// Локальная база заказов
 	orders := []store.Order{}
@@ -119,10 +135,5 @@ func SyncOrdersEvents() {
 	logger.Log.WithFields(logrus.Fields{
 		"calendars": calendars,
 	}).Trace("SyncOrdersEvents: Calendars updated by UpdateCalendarTokens")
-
-	// Пример вывода локальной базы
-	for _, o := range orders {
-		logger.Log.Info("Order %s | %s | %s | %s\n", o.OperID, o.Summary, o.Summary, o.CalendarID, o.Start, o.End, o.EventID)
-	}
 
 }

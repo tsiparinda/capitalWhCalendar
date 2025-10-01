@@ -31,11 +31,5 @@
 - Store the resulting `eventId` in the order record (`whcal_EventID`).
 - Optionally assign a special color (e.g., red) to visually mark newly created events.
 
-## 5. SyncToken handling
-- Do **not** immediately overwrite the `syncToken` after the first `events.list` call.
-- After inserting new orders, perform one more:
-    events.list(calendarId, syncToken=previous)
-to ensure your own newly created events are included in the delta.
-- Save the returned `nextSyncToken` into the database.
-- This guarantees that both user modifications and system-inserted events are reflected in the next synchronization cycle.
+
 
