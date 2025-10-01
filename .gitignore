@@ -6,6 +6,8 @@
 *.test
 
 service-account.json
+client_secret.json
+token.json
 
 # Tools / outputs
 coverage.out
