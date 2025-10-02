@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
-	"time"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/sirupsen/logrus"
@@ -15,10 +13,10 @@ import (
 
 func LoadOrders(orders *[]Order) error {
 
-	loc, err := time.LoadLocation("Europe/Kiev")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// loc, err := time.LoadLocation("Europe/Kiev")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// Select data from database
 	rows, err := db.DB.Query("SELECT calendarID,	summary,	description, [start], [end], OperID, ColorID  FROM whcal_orders2send")
@@ -37,8 +35,8 @@ func LoadOrders(orders *[]Order) error {
 			return err
 		}
 		// Приводим к нужной зоне
-		p.Start = p.Start.In(loc)
-		p.End = p.End.In(loc)
+		// p.Start = p.Start.In(loc)
+		// p.End = p.End.In(loc)
 
 		*orders = append(*orders, p)
 	}

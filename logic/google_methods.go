@@ -95,12 +95,14 @@ func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary
 		//ColorId:     "7",
 		Start: &calendar.EventDateTime{
 			DateTime: start.Format(time.RFC3339),
-			TimeZone: "Europe/Kiev",
+			//TimeZone: "Europe/Kiev",
+			TimeZone: "",
 		},
 		End: &calendar.EventDateTime{
 			//DateTime: end.Format("2006-01-02T15:15:05"),
 			DateTime: end.Format(time.RFC3339),
-			TimeZone: "Europe/Kiev",
+			//TimeZone: "Europe/Kiev",
+			TimeZone: "",
 		},
 		ExtendedProperties: &calendar.EventExtendedProperties{
 			Private: map[string]string{
