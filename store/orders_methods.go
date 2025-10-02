@@ -13,10 +13,7 @@ import (
 
 func LoadOrders(orders *[]Order) error {
 
-	// loc, err := time.LoadLocation("Europe/Kiev")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+
 
 	// Select data from database
 	rows, err := db.DB.Query("SELECT calendarID,	summary,	description, [start], [end], OperID, ColorID  FROM whcal_orders2send")
@@ -34,9 +31,7 @@ func LoadOrders(orders *[]Order) error {
 			logger.Log.Errorf("LoadOrders: Error scanning orders rows:", err.Error())
 			return err
 		}
-		// Приводим к нужной зоне
-		// p.Start = p.Start.In(loc)
-		// p.End = p.End.In(loc)
+
 
 		*orders = append(*orders, p)
 	}
