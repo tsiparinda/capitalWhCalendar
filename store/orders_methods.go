@@ -15,7 +15,7 @@ import (
 
 func LoadOrders(orders *[]Order) error {
 
-	loc, err := time.LoadLocation("Europe/Kyiv")
+	loc, err := time.LoadLocation("Europe/Kiev")
 	if err != nil {
 		log.Fatal(err)
 	}
