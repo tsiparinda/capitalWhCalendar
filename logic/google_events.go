@@ -68,7 +68,10 @@ func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calenda
 
 func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 
+	// declaration of local Orders DB
+	orders := []store.Order{}
 	calendars := []store.Calendar{}
+
 	// Take a list of Calendars
 	err := store.LoadCalendars(&calendars)
 	if err != nil {
@@ -78,9 +81,6 @@ func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 	logger.Log.WithFields(logrus.Fields{
 		"calendars": calendars,
 	}).Trace("SyncOrdersEvents: Calendars loaded by LoadCalendars")
-
-	// declaration of local Orders DB
-	orders := []store.Order{}
 
 	// Syncronise each calendar by SyncToken (delta of changes)
 	for i, cal := range calendars {
@@ -99,15 +99,33 @@ func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 				operID = e.ExtendedProperties.Private["operid"]
 			}
 
-			start, _ := parseEventDateTime(e.Start)
-			end, _ := parseEventDateTime(e.End)
-
+			start, err := parseEventDateTime(e.Start)
+			if err != nil {
+				logger.Log.Warnf("Failed to parse start time for event %s: %v", e.Id, err)
+				continue
+			}
+			end, err := parseEventDateTime(e.End)
+			if err != nil {
+				logger.Log.Warnf("Failed to parse start time for event %s: %v", e.Id, err)
+				continue
+			}
+			fileURL := ""
+			if e.Attachments != nil && len(e.Attachments) > 0 {
+				for _, a := range e.Attachments {
+					if a.FileUrl != "" {
+						fileURL = a.FileUrl
+						break
+					}
+				}
+			}
 			if operID != "" {
 				orders = append(orders, store.Order{
 					OperID:      operID,
 					Summary:     e.Summary,
 					Start:       start,
 					End:         end,
+					ColorId:     e.ColorId,
+					FileURL:     fileURL,
 					Description: e.Description,
 					CalendarID:  cal.CalendarID,
 					EventID:     e.Id,
@@ -116,8 +134,18 @@ func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 		}
 	}
 
+	// update Order parameters in SQL DB
+	err = store.OrdersUpdate(&orders)
+	if err != nil {
+		logger.Log.Errorf("SyncOrdersEvents: Error from OrdersUpdate:", err.Error())
+		return
+	}
+	logger.Log.WithFields(logrus.Fields{
+		"calendars": calendars,
+	}).Trace("SyncOrdersEvents: Orders updated by OrdersUpdate")
+
 	//update Calendars tokens in SQL DB
-	err = store.UpdateCalendarTokens(calendars)
+	err = store.UpdateCalendarTokens(&calendars)
 	if err != nil {
 		logger.Log.Errorf("SyncOrdersEvents: Error from UpdateCalendarTokens:", err.Error())
 		return
@@ -125,5 +153,4 @@ func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 	logger.Log.WithFields(logrus.Fields{
 		"calendars": calendars,
 	}).Trace("SyncOrdersEvents: Calendars updated by UpdateCalendarTokens")
-
 }

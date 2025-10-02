@@ -14,7 +14,7 @@ type Order struct {
 	Start       time.Time `json:"start"`
 	End         time.Time `json:"end"`
 	OperID      string    `json:"operID"`
-	EventID     string    `json:"evendID"`
+	EventID     string    `json:"eventID"`
 	ColorId     string    `json:"colorid"`
 	FileURL     string    `json:"fileURL"`
 	Articles    []OrderDetails
@@ -22,8 +22,8 @@ type Order struct {
 
 // ---------- Order details structure ----------
 type OrderDetails struct {
-	Article string
-	Amount  decimal.Decimal
+	Article string          `json:"article"`
+	Amount  decimal.Decimal `json:"amount"`
 }
 
 // Calendar's SynkTokens

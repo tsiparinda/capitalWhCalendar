@@ -4,6 +4,8 @@ import (
 	"capitalWhCalendar/db"
 	"capitalWhCalendar/logger"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -47,7 +49,7 @@ func LoadOrders(orders *[]Order) error {
 	}
 
 	// Check for errors from iterating over rows.
-	if err := insertProduct(orders); err != nil {
+	if err := downloadProducts(orders); err != nil {
 		logger.Log.Errorf("LoadOrders: Error inserting orders rows:", err.Error())
 		return err
 	}
@@ -55,7 +57,7 @@ func LoadOrders(orders *[]Order) error {
 	return nil
 }
 
-// don't used
+// update Order's parameter
 func LinkOrder2Event(p Order) {
 
 	// Update data of order in DB
@@ -69,7 +71,29 @@ func LinkOrder2Event(p Order) {
 
 }
 
-func insertProduct(orders *[]Order) error {
+// update Order's parameter
+func OrdersUpdate(orders *[]Order) error {
+	jsonData, err := json.Marshal(orders)
+	if err != nil {
+		return fmt.Errorf("marshal orders failed: %w", err)
+	}
+
+	if _, err := db.DB.Exec("EXEC whcal_OrdersUpdate @data=@p1",
+		sql.Named("p1", string(jsonData)),
+	); err != nil {
+		logger.Log.WithFields(logrus.Fields{
+			"Orders": string(jsonData),
+		}).Debugf("OrdersUpdate: Error run sp.[whcal_OrdersUpdate]: %s", err.Error())
+		return err
+	}
+
+	logger.Log.WithFields(logrus.Fields{
+		"ORDERS": orders,
+	}).Trace("OrdersUpdate: Orders updated by OrdersUpdate")
+	return nil
+}
+
+func downloadProducts(orders *[]Order) error {
 	// in orders we have only new orders!!!
 	// Select data from database
 

@@ -40,15 +40,15 @@ func LoadCalendars(calendars *[]Calendar) error {
 	return nil
 }
 
-func UpdateCalendarTokens(cal []Calendar) error {
-	for _, c := range cal {
+func UpdateCalendarTokens(cal *[]Calendar) error {
+	for _, c := range *cal {
 		// Update data of order in DB
 		if _, err := db.DB.Exec("exec whcal_CalendarUpdate @CalendarID, @SyncToken",
 			sql.Named("CalendarID", c.CalendarID),
 			sql.Named("SyncToken", c.SyncToken)); err != nil {
 			logger.Log.WithFields(logrus.Fields{
 				"CalendarID": c.CalendarID,
-			}).Debugf("UpdateCalendarTokens: Error run sp.[whcal_CalendarUpdate]: ", err.Error())
+			}).Debugf("UpdateCalendarTokens: Error run sp.[whcal_CalendarUpdate]: %v", err.Error())
 			return err
 		}
 	}
