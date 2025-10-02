@@ -8,11 +8,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/calendar/v3"
-	"google.golang.org/api/option"
+	"google.golang.org/api/drive/v3"
 )
 
-func SendNewOrders() {
-	ctx := context.Background()
+func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calendar.Service) {
 
 	orders := []store.Order{}
 
@@ -26,17 +25,13 @@ func SendNewOrders() {
 		"orders": orders,
 	}).Trace("SendNewOrders: Orders loaded by LoadOrders")
 
-	driveSrv, err := createDriveService()
-	if err != nil {
-		logger.Log.Fatal(err)
-	}
-
 	folderID := "1N1b8WIfccnb7SdWt8YXr8m-sbyH4t8wT"
 	days := 7
 
+	// delete old files from Drive
 	deleteOldFiles(driveSrv, folderID, days)
 
-	// generate PDF
+	// generate PDF for attachments
 	if err := store.CreatePDF(driveSrv, &orders, folderID); err != nil {
 		logger.Log.Errorf("SendNewOrders: Error from GeneratePDF:", err.Error())
 		return
@@ -45,42 +40,27 @@ func SendNewOrders() {
 		"orders": orders,
 	}).Trace("SendNewOrders: Orders loaded to pdf")
 
-	// Создание сервиса с сервисным аккаунтом
-	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
-	if err != nil {
-		// log.Fatalf("StartExchangeEvents: Unable to create Calendar service: %v", err)
-		logger.Log.Errorf("SendNewOrders: Unable to create Calendar service: %v", err.Error())
-	}
-
 	// cycle to send events
 	for _, p := range orders {
 
-		// Пример: создание события
-		eventID, err := createEvent(ctx, srv, p.CalendarID, p.Summary, p.Description, p.OperID, p.ColorId, p.FileURL, p.Start, p.End)
+		// Create Event
+		eventID, err := createEvent(ctx, calSrv, p.CalendarID, p.Summary, p.Description, p.OperID, p.ColorId, p.FileURL, p.Start, p.End)
 		if err != nil {
 			logger.Log.Errorf("SendNewOrders: Error creating event: %v", err)
 		}
 		p.EventID = eventID
-		// update order
+		// Link Order with Event - save eventID in order's parameter
 		store.LinkOrder2Event(p)
 		logger.Log.Debugf("SendNewOrders: Created event ID:", eventID)
 	}
 
 }
 
-func SyncOrdersEvents() {
-	ctx := context.Background()
-
-	// Создание сервиса с сервисным аккаунтом
-	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
-	if err != nil {
-		// log.Fatalf("StartExchangeEvents: Unable to create Calendar service: %v", err)
-		logger.Log.Errorf("SyncOrdersEvents: Unable to create Calendar service: %v", err.Error())
-	}
+func SyncOrdersEvents(ctx context.Context, calSrv *calendar.Service) {
 
 	calendars := []store.Calendar{}
-
-	err = store.LoadCalendars(&calendars)
+	// Take a list of Calendars
+	err := store.LoadCalendars(&calendars)
 	if err != nil {
 		logger.Log.Errorf("SyncOrdersEvents: Error from LoadCalendars:", err.Error())
 		return
@@ -89,20 +69,20 @@ func SyncOrdersEvents() {
 		"calendars": calendars,
 	}).Trace("SyncOrdersEvents: Calendars loaded by LoadCalendars")
 
-	// Локальная база заказов
+	// declaration of local Orders DB
 	orders := []store.Order{}
 
-	// Синхронизируем каждый календарь
+	// Syncronise each calendar by SyncToken (delta of changes)
 	for i, cal := range calendars {
-		newToken, events, err := syncCalendar(ctx, srv, cal.CalendarID, cal.SyncToken)
+		newToken, events, err := syncCalendar(ctx, calSrv, cal.CalendarID, cal.SyncToken)
 		if err != nil {
 			logger.Log.Errorf("SyncOrdersEvents:Error syncing calendar %s: %v", cal.CalendarID, err)
 			continue
 		}
-		// Обновляем syncToken
+		// update syncToken
 		calendars[i].SyncToken = newToken
 
-		// Обновляем локальную базу заказов
+		// fill in the local Orders DB
 		for _, e := range events {
 			operID := ""
 			if e.ExtendedProperties != nil && e.ExtendedProperties.Private != nil {
@@ -126,7 +106,7 @@ func SyncOrdersEvents() {
 		}
 	}
 
-	//update calendars tokens
+	//update Calendars tokens in SQL DB
 	err = store.UpdateCalendarTokens(calendars)
 	if err != nil {
 		logger.Log.Errorf("SyncOrdersEvents: Error from UpdateCalendarTokens:", err.Error())

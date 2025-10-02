@@ -19,7 +19,43 @@ import (
 	"google.golang.org/api/drive/v3"
 )
 
-// Функция очистки старых файлов на Drive
+// create Drive service
+func CreateDriveService() (*drive.Service, error) {
+	// read OAuth credentials
+	b, err := os.ReadFile("client_secret.json")
+	if err != nil {
+		return nil, fmt.Errorf("CreateDriveService: unable to read client_secret.json: %v", err)
+	}
+
+	// get config
+	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
+	if err != nil {
+		return nil, fmt.Errorf("CreateDriveService: unable to parse client secret file: %v", err)
+	}
+
+	client := getClient(config)
+
+	// createс Drive service
+	srv, err := drive.NewService(context.Background(), option.WithHTTPClient(client))
+	if err != nil {
+		return nil, fmt.Errorf("CreateDriveService: unable to create Drive service: %v", err)
+	}
+	return srv, nil
+}
+
+func CreateCalService(ctx context.Context) (*calendar.Service, error) {
+
+	// Create service for calendar access
+	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
+	if err != nil {
+		// log.Fatalf("StartExchangeEvents: Unable to create Calendar service: %v", err)
+		logger.Log.Errorf("CreateCalService: Unable to create Calendar service: %v", err.Error())
+		return nil, err
+	}
+	return srv, nil
+}
+
+// clean old files from the work folder on Drive
 func deleteOldFiles(driveSrv *drive.Service, folderID string, days int) error {
 	cutoff := time.Now().AddDate(0, 0, -days).Format(time.RFC3339)
 
@@ -49,7 +85,7 @@ func deleteOldFiles(driveSrv *drive.Service, folderID string, days int) error {
 	return nil
 }
 
-// Создание события
+// create Event
 func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary, description, operid, colorid, fileURL string, start, end time.Time) (string, error) {
 
 	event := &calendar.Event{
@@ -93,23 +129,23 @@ func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary
 	return createdEvent.Id, nil
 }
 
-// Получение события по ID
+// get Event by ID
 func getEvent(ctx context.Context, srv *calendar.Service, calendarID, eventID string) (*calendar.Event, error) {
 	return srv.Events.Get(calendarID, eventID).Do()
 }
 
-// Обновление события
+// update Event
 func updateEvent(ctx context.Context, srv *calendar.Service, calendarID string, event *calendar.Event) error {
 	_, err := srv.Events.Update(calendarID, event.Id, event).Do()
 	return err
 }
 
-// Удаление события
+// delete Event
 func deleteEvent(ctx context.Context, srv *calendar.Service, calendarID, eventID string) error {
 	return srv.Events.Delete(calendarID, eventID).Do()
 }
 
-// syncCalendar получает изменения календаря по syncToken
+// syncCalendar - get changes by syncToken and take a new synctoken
 func syncCalendar(ctx context.Context, srv *calendar.Service, calendarID, syncToken string) (string, []*calendar.Event, error) {
 	call := srv.Events.List(calendarID).
 		ShowDeleted(true).
@@ -147,30 +183,7 @@ func parseEventDateTime(edt *calendar.EventDateTime) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("no date found in EventDateTime")
 }
 
-func createDriveService() (*drive.Service, error) {
-	//Читаем OAuth credentials
-	b, err := os.ReadFile("client_secret.json")
-	if err != nil {
-		return nil, fmt.Errorf("unable to read client_secret.json: %v", err)
-	}
-
-	// Настраиваем конфиг
-	config, err := google.ConfigFromJSON(b, drive.DriveFileScope)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse client secret file: %v", err)
-	}
-
-	client := getClient(config)
-
-	// Создаем сервис Drive
-	srv, err := drive.NewService(context.Background(), option.WithHTTPClient(client))
-	if err != nil {
-		return nil, fmt.Errorf("unable to create Drive service: %v", err)
-	}
-	return srv, nil
-}
-
-// Получаем OAuth клиент
+// Get OAuth client
 func getClient(config *oauth2.Config) *http.Client {
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
@@ -181,7 +194,7 @@ func getClient(config *oauth2.Config) *http.Client {
 	return config.Client(context.Background(), tok)
 }
 
-// Чтение токена из файла
+// read token
 func tokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -193,14 +206,14 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	return tok, err
 }
 
-// Сохранение токена
+// save token
 func saveToken(path string, token *oauth2.Token) {
 	f, _ := os.Create(path)
 	defer f.Close()
 	json.NewEncoder(f).Encode(token)
 }
 
-// Получение токена через браузер
+// Get toket from browser
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Open this URL in your browser:\n%v\n", authURL)
