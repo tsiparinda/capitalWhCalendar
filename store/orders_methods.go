@@ -96,7 +96,7 @@ func insertProduct(orders *[]Order) error {
 
 		// Check for errors from iterating over rows.
 		if err := rows.Err(); err != nil {
-			logger.Log.Errorf("LoadOrders: Error iterating orders rows:", err.Error())
+			logger.Log.Errorf("insertProduct: Error iterating orders rows:", err.Error())
 			return err
 		}
 		defer rows.Close()

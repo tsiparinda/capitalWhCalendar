@@ -22,7 +22,7 @@ import (
 // create Drive service
 func CreateDriveService() (*drive.Service, error) {
 	// read OAuth credentials
-	b, err := os.ReadFile("client_secret.json")
+	b, err := os.ReadFile("secrets/client_secret.json")
 	if err != nil {
 		return nil, fmt.Errorf("CreateDriveService: unable to read client_secret.json: %v", err)
 	}
@@ -46,7 +46,7 @@ func CreateDriveService() (*drive.Service, error) {
 func CreateCalService(ctx context.Context) (*calendar.Service, error) {
 
 	// Create service for calendar access
-	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("service-account.json"))
+	srv, err := calendar.NewService(ctx, option.WithCredentialsFile("secrets/service-account.json"))
 	if err != nil {
 		// log.Fatalf("StartExchangeEvents: Unable to create Calendar service: %v", err)
 		logger.Log.Errorf("CreateCalService: Unable to create Calendar service: %v", err.Error())
@@ -185,7 +185,7 @@ func parseEventDateTime(edt *calendar.EventDateTime) (time.Time, error) {
 
 // Get OAuth client
 func getClient(config *oauth2.Config) *http.Client {
-	tokFile := "token.json"
+	tokFile := "secrets/token.json"
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		tok = getTokenFromWeb(config)

@@ -3,6 +3,6 @@
     "connectionStr": "server=bold;database=capital2010;Integrated Security=SSPI",
     "TIPS_logLevel": "Trace Debug Info Warn Error Fatal Panic",
     "logLevel": "Trace",
-    "RequestDaysTrans": 1,
-    "RequestDaysBalance": 1
+    "folderID" : "1N1b8WIfccnb7SdWt8YXr8m-sbyH4t8wT",
+	"fileStorageTimeDays" : 7
 }

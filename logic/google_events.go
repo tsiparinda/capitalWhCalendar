@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"capitalWhCalendar/config"
 	"capitalWhCalendar/logger"
 
 	"capitalWhCalendar/store"
@@ -25,11 +26,20 @@ func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calenda
 		"orders": orders,
 	}).Trace("SendNewOrders: Orders loaded by LoadOrders")
 
-	folderID := "1N1b8WIfccnb7SdWt8YXr8m-sbyH4t8wT"
-	days := 7
+	folderID := config.Config["folderID"].(string)
+
+	var storedays int
+	// take requestdays from config file and convert to int
+	if value, ok := config.Config["fileStorageTimeDays"].(float64); ok {
+		// The value is a float64, handle it accordingly
+		storedays = int(value)
+	} else {
+		logger.Log.Info("SendNewOrders: Error loading fileStorageTimeDays from config:", err.Error())
+		storedays = 7
+	}
 
 	// delete old files from Drive
-	deleteOldFiles(driveSrv, folderID, days)
+	deleteOldFiles(driveSrv, folderID, storedays)
 
 	// generate PDF for attachments
 	if err := store.CreatePDF(driveSrv, &orders, folderID); err != nil {
