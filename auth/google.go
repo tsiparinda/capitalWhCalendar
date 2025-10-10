@@ -7,82 +7,59 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/user"
 	"path/filepath"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
-// Scopes — список API-доступов, которые мы разрешаем одновременно.
 var Scopes = []string{
-	"https://www.googleapis.com/auth/drive.file",   // доступ к Drive (только файлы, созданные приложением)
-	"https://www.googleapis.com/auth/calendar",     // доступ к Google Calendar
+	"https://www.googleapis.com/auth/drive.file",
+	"https://www.googleapis.com/auth/calendar",
 }
 
-// GetClient — возвращает общий HTTP client для всех сервисов (Drive, Calendar).
-func GetClient() *http.Client {
+// GetServiceClient — полностью безбраузерный OAuth-клиент.
+// Требует заранее созданные файлы secrets/client_secret.json и secrets/google-token.json.
+func GetServiceClient() *http.Client {
 	ctx := context.Background()
 
-	b, err := os.ReadFile("../secrets/client_secret.json")
+	// 1️⃣ Пути к секретам
+	clientSecretPath := filepath.Join("secrets", "client_secret.json")
+	tokenPath := filepath.Join("secrets", "google-token.json")
+
+	// 2️⃣ Загружаем client_secret.json
+	b, err := os.ReadFile(clientSecretPath)
 	if err != nil {
-		log.Fatalf("Unable to read client_secret.json: %v", err)
+		log.Fatalf("Unable to read %s: %v", clientSecretPath, err)
 	}
 
 	config, err := google.ConfigFromJSON(b, Scopes...)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file: %v", err)
+		log.Fatalf("Unable to parse client secret: %v", err)
 	}
 
-	tokenFile := tokenFilePath()
-	tok, err := tokenFromFile(tokenFile)
+	// 3️⃣ Загружаем токен (создан вручную через manual_auth.go)
+	tok, err := tokenFromFile(tokenPath)
 	if err != nil {
-		fmt.Println("⚠️  No valid token found. Starting new authorization flow...")
-		tok = getTokenFromWeb(config)
-		saveToken(tokenFile, tok)
-	} else {
-		ts := config.TokenSource(ctx, tok)
-		newTok, err := ts.Token()
-		if err != nil {
-			fmt.Println("⚠️  Token refresh failed:", err)
-			fmt.Println("🔄  Starting new authorization flow...")
-			tok = getTokenFromWeb(config)
-			saveToken(tokenFile, tok)
-		} else if newTok.AccessToken != tok.AccessToken {
-			saveToken(tokenFile, newTok)
-			tok = newTok
-		}
+		log.Fatalf("Missing or invalid token file (%s): %v", tokenPath, err)
 	}
 
-	return config.Client(ctx, tok)
+	// 4️⃣ Проверяем срок действия токена
+	ts := config.TokenSource(ctx, tok)
+	newTok, err := ts.Token()
+	if err != nil {
+		log.Fatalf("Unable to refresh token: %v", err)
+	}
+
+	// 5️⃣ Если access_token обновился — сохраняем новый
+	if newTok.AccessToken != tok.AccessToken {
+		saveToken(tokenPath, newTok)
+	}
+
+	return config.Client(ctx, newTok)
 }
 
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Open the following link in your browser and authorize the application:\n%v\n", authURL)
-
-	fmt.Print("Enter the authorization code: ")
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
-	}
-
-	tok, err := config.Exchange(context.Background(), authCode)
-	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
-	}
-	return tok
-}
-
-func tokenFilePath() string {
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatalf("Unable to get user home directory: %v", err)
-	}
-	tokenDir := filepath.Join(usr.HomeDir, ".credentials")
-	os.MkdirAll(tokenDir, 0700)
-	return filepath.Join(tokenDir, "google-token.json")
-}
+// ------------------ вспомогательные функции ------------------
 
 func tokenFromFile(file string) (*oauth2.Token, error) {
 	f, err := os.Open(file)
@@ -96,11 +73,12 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 }
 
 func saveToken(path string, token *oauth2.Token) {
-	fmt.Printf("💾 Saving token to %s\n", path)
 	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("Unable to cache OAuth token: %v", err)
+		log.Printf("⚠️ Unable to save refreshed token: %v", err)
+		return
 	}
 	defer f.Close()
 	json.NewEncoder(f).Encode(token)
+	fmt.Printf("💾 Token updated in %s\n", path)
 }

@@ -1,12 +1,18 @@
 package main
 
 import (
+	"capitalWhCalendar/auth"
 	"capitalWhCalendar/db"
 	"capitalWhCalendar/logger"
 	"capitalWhCalendar/logic"
 	"context"
 	"fmt"
+	"log"
 	"os"
+
+	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/option"
 )
 
 func main() {
@@ -24,18 +30,37 @@ func main() {
 
 	logger.Log.Info("Program was started")
 
+	// old auth block
 	// Create service for Disk access
-	driveSrv, err := logic.CreateDriveService()
+	// driveSrv, err := logic.CreateDriveService()
+	// if err != nil {
+	// 	logger.Log.Fatal(err)
+	// }
+	// // Create service for Disk access
+	// calSrv, err := logic.CreateCalService(ctx)
+	// if err != nil {
+	// 	logger.Log.Fatal(err)
+	// }
+
+	//new auth
+
+	// ONE TIME ONLY!!!
+	// auth.Manual_auth()
+	// return
+
+	client := auth.GetServiceClient()
+
+	driveSrv, err := drive.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
-		logger.Log.Fatal(err)
-	}
-	
-	// Create service for Disk access
-	calSrv, err := logic.CreateCalService(ctx)
-	if err != nil {
-		logger.Log.Fatal(err)
+		log.Fatalf("Unable to create Drive service: %v", err)
 	}
 
+	calSrv, err := calendar.NewService(context.Background(), option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatalf("Unable to create Calendar service: %v", err)
+	}
+
+	// logic
 	logic.SyncOrdersEvents(ctx, calSrv)
 	logic.SendNewOrders(ctx, driveSrv, calSrv)
 
