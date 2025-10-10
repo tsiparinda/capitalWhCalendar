@@ -40,15 +40,22 @@ func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calenda
 
 	// delete old files from Drive
 	deleteOldFiles(driveSrv, folderID, storedays)
-
 	// generate PDF for attachments
-	if err := store.CreatePDF(driveSrv, &orders, folderID); err != nil {
-		logger.Log.Errorf("SendNewOrders: Error from GeneratePDF:", err.Error())
-		return
+	err = store.CreatePDF(driveSrv, &orders, folderID)
+	if err != nil {
+		logger.Log.WithError(err).Warn("SendNewOrders: PDF generation encountered some issues, continuing anyway")
 	}
 	logger.Log.WithFields(logrus.Fields{
 		"orders": orders,
-	}).Trace("SendNewOrders: Orders loaded to pdf")
+	}).Trace("SendNewOrders: Orders processed (PDF step complete)")
+
+	// // generate PDF for attachments
+	// if err := store.CreatePDF(driveSrv, &orders, folderID); err != nil {
+	// 	logger.Log.Errorf("SendNewOrders: Error from GeneratePDF:", err.Error())
+	// }
+	// logger.Log.WithFields(logrus.Fields{
+	// 	"orders": orders,
+	// }).Trace("SendNewOrders: Orders loaded to pdf")
 
 	// cycle to send events
 	for _, p := range orders {

@@ -29,16 +29,17 @@ func CreatePDF(driveSrv *drive.Service, orders *[]Order, folderId string) error 
 		pdfBytes, err := generatePDFInMemory(o)
 		if err != nil {
 			logger.Log.Errorf("CreatePDF: Error generating PDF for order %s: %v", o.OperID, err)
-			return err
+			continue
 		}
 		logger.Log.WithFields(logrus.Fields{
 			"OrderID":  o.OperID,
 			"Articles": o.Articles,
-		}).Trace("CreatePDF: PDF generated")
+		}).Trace("CreatePDF: PDFinMemory was generated")
 
 		fileID, err := uploadPDFBytesToDrive(pdfBytes, "order_"+o.OperID+".pdf", folderId, driveSrv)
 		if err != nil {
-			logger.Log.Errorf("CreatePDF: Upload failed for %s: %v", fileID, err)
+			logger.Log.Warnf("CreatePDF: Upload failed for %s: %v", fileID, err)
+			o.FileURL = ""
 			continue
 		}
 

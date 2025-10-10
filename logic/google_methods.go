@@ -109,14 +109,18 @@ func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary
 				"status":    "pending", // например "pending"
 			},
 		},
-		Attachments: []*calendar.EventAttachment{
+		ColorId: colorid,
+	}
+
+	// ✅ Add Attachment only if link is existed
+	if fileURL != "" {
+		event.Attachments = []*calendar.EventAttachment{
 			{
 				FileUrl:  fileURL,
 				Title:    "Заказ #" + operid,
 				MimeType: "application/pdf",
 			},
-		},
-		ColorId: colorid,
+		}
 	}
 
 	createdEvent, err := srv.Events.Insert(calendarID, event).
@@ -126,6 +130,7 @@ func createEvent(ctx context.Context, srv *calendar.Service, calendarID, summary
 	if err != nil {
 		return "", err
 	}
+	
 	return createdEvent.Id, nil
 }
 

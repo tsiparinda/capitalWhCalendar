@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
+	
 	// Create service for Disk access
 	calSrv, err := logic.CreateCalService(ctx)
 	if err != nil {
