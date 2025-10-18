@@ -46,7 +46,7 @@ func main() {
 
 	// ONE TIME ONLY!!!
 	// auth.Manual_auth()
-	// return
+	
 
 	client := auth.GetServiceClient()
 
