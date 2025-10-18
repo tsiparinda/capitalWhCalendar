@@ -36,7 +36,7 @@ func Manual_auth() {
 	}
 
 	// --- Генерируем ссылку для авторизации ---
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	fmt.Printf("\n🔗 Open the following link in your browser and authorize the app:\n%v\n", authURL)
 
 	fmt.Print("\nEnter the authorization code: ")
