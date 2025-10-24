@@ -45,8 +45,14 @@ func main() {
 	//new auth
 
 	// ONE TIME ONLY!!!
+	// uncommen next line and exe: go run . - terminal will wait your answer
+	// copy link from terminal to browser on machine where this application will work permanently
+	// login to Google by account from where was client-service.json received
+	// Continue and check all the permissions
+	// after you will have error 404, copy the token = part of address from &code=... till next word
+	// put this line to terminal
+	// the file secrets/ google-token.json is ready to using - copy it to same folder on permanently working machine
 	// auth.Manual_auth()
-	
 
 	client := auth.GetServiceClient()
 
