@@ -40,3 +40,6 @@
 - copy capitalWhCalendar.exe to \\bold\c$\Program files\capitalWhCalendar
 - copy sevrets folder to \\bold\c$\Program files\capitalWhCalendar
 - give a full permissions on folder \\bold\c$\Program files\capitalWhCalendar to account who will run .exe!!!
+
+## Where dies this calendars live?
+https://console.cloud.google.com/ kivitsys@gmail.com
