@@ -58,9 +58,14 @@ func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calenda
 	// 	"orders": orders,
 	// }).Trace("SendNewOrders: Orders loaded to pdf")
 
+	ticker := time.NewTicker(500 * time.Millisecond) // to avoid hitting Google API rate limits
+	defer ticker.Stop()
+
 	// cycle to send events
 	for _, p := range orders {
-		time.Sleep(500 * time.Millisecond) // to avoid hitting Google API rate limits
+
+		<-ticker.C // wait for the next tick before proceeding
+
 		// Create Event
 		eventID, err := createEvent(ctx, calSrv, p.CalendarID, p.Summary, p.Description, p.OperID, p.ColorId, p.FileURL, p.Start, p.End)
 		if err != nil {
