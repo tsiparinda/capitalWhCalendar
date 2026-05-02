@@ -3,6 +3,7 @@ package logic
 import (
 	"capitalWhCalendar/config"
 	"capitalWhCalendar/logger"
+	"time"
 
 	"capitalWhCalendar/store"
 	"context"
@@ -59,7 +60,7 @@ func SendNewOrders(ctx context.Context, driveSrv *drive.Service, calSrv *calenda
 
 	// cycle to send events
 	for _, p := range orders {
-
+		time.Sleep(500 * time.Millisecond) // to avoid hitting Google API rate limits
 		// Create Event
 		eventID, err := createEvent(ctx, calSrv, p.CalendarID, p.Summary, p.Description, p.OperID, p.ColorId, p.FileURL, p.Start, p.End)
 		if err != nil {
